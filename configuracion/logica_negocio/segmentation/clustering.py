@@ -30,7 +30,7 @@ class SegmentacionClustering(EstrategiaSegmentacion):
         clusters = np.argmin(distancias, axis=1)
         segmentos = np.zeros(len(X), dtype=int)
         for i, cluster in enumerate(clusters):
-            segmentos[i] = int(np.where(self._orden == cluster)[0][0])
+            segmentos[i] = int(np.nonzero(self._orden == cluster)[0][0])
         return segmentos
     
     def get_config(self) -> Dict[str, Any]:

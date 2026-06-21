@@ -163,7 +163,7 @@ class Orchestrator:
             if mejor_modelo:
                 self._modelo_fallback_cache = mejor_modelo
                 return mejor_modelo
-        self._modelo_fallback_cache = sorted(self._modelos.keys())[0]
+        self._modelo_fallback_cache = min(self._modelos.keys())
         return self._modelo_fallback_cache
     
     def _seleccionar_por_mae(self, metricas: dict) -> Optional[str]:

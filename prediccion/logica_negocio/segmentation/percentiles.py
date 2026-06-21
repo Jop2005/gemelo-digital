@@ -12,6 +12,9 @@ class SegmentacionPercentiles(EstrategiaSegmentacion):
         self._combinaciones: List[tuple] = []
     
     def fit(self, df: pd.DataFrame, config: Dict[str, Any]) -> None:
+        # Método vacío intencional - se carga desde configuración
+        # Las estrategias de segmentación pueden cargarse desde config sin entrenamiento
+        # Este método existe para cumplir con la interfaz EstrategiaSegmentacion
         pass
     
     def transform(self, X: pd.DataFrame) -> np.ndarray:

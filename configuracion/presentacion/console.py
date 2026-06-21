@@ -66,7 +66,6 @@ class Console:
         if not resultado:
             return
         
-        # Verificar si es un ResultadoEntrenamiento (nuevo formato)
         if hasattr(resultado, 'es_modelo_ml'):
             if resultado.es_modelo_ml():
                 self.mostrar_exito(f"{nombre} entrenado")
@@ -77,15 +76,13 @@ class Console:
             else:
                 self.mostrar_exito(f"{nombre} entrenado")
         
-        # Compatibilidad con formato antiguo (tupla)
         elif isinstance(resultado, tuple):
             if len(resultado) >= 3:
-                modelo, params, mae = resultado[0], resultado[1], resultado[2]
+                _, _, mae = resultado[0], resultado[1], resultado[2]
                 self.mostrar_exito(f"{nombre} entrenado. MAE: {mae:.4f}")
             else:
                 self.mostrar_exito(f"{nombre} entrenado")
         
-        # Fallback
         else:
             self.mostrar_exito(f"{nombre} entrenado")
     

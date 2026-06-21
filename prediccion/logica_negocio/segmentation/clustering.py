@@ -12,6 +12,9 @@ class SegmentacionClustering(EstrategiaSegmentacion):
         self._orden: Optional[np.ndarray] = None
     
     def fit(self, df: pd.DataFrame, config: Dict[str, Any]) -> None:
+        # Método vacío intencional - las instancias se crean desde configuración
+        # Las estrategias de segmentación pueden cargarse desde config sin entrenamiento
+        # Este método existe para cumplir con la interfaz EstrategiaSegmentacion
         pass
     
     def transform(self, X: pd.DataFrame) -> np.ndarray:
@@ -20,7 +23,7 @@ class SegmentacionClustering(EstrategiaSegmentacion):
         clusters = np.argmin(distancias, axis=1)
         segmentos = np.zeros(len(X), dtype=int)
         for i, cluster in enumerate(clusters):
-            segmentos[i] = int(np.where(self._orden == cluster)[0][0])
+            segmentos[i] = int(np.nonzero(self._orden == cluster)[0][0])
         return segmentos
     
     def get_config(self) -> Dict[str, Any]:

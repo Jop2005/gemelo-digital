@@ -117,6 +117,58 @@ class PipelineUI:
         except Exception as e:
             self._ui.mostrar_error(f"Error al entrenar: {str(e)}")
     
+    def _mostrar_cabecera_evaluacion(self, resultado):
+        n_seg = resultado.get('n_segments', 0)
+        modelos = resultado.get('modelos_evaluados', [])
+        self._ui.mostrar_exito("\n📊 EVALUACIÓN POR SEGMENTO")
+        self._ui.mostrar_info(f"Segmentos evaluados: {n_seg}")
+        self._ui.mostrar_info(f"Modelos evaluados: {', '.join(modelos)}")
+        self._ui.mostrar_info(f"Tipo de segmentación: {resultado.get('tipo_segmentacion', 'N/A')}")
+    
+    def _mostrar_distribucion_muestras(self, resultado):
+        distribucion = resultado.get('distribucion', [])
+        if distribucion:
+            self._ui.mostrar_info("\n📈 Distribución de muestras por segmento:")
+            total = sum(distribucion)
+            for seg, cantidad in enumerate(distribucion):
+                if cantidad > 0:
+                    self._ui.mostrar_info(f"   Segmento {seg}: {cantidad} muestras ({cantidad/total*100:.1f}%)")
+    
+    def _mostrar_tabla_metricas(self, resultado):
+        n_seg = resultado.get('n_segments', 0)
+        metricas = resultado.get('metricas', {})
+        modelos = resultado.get('modelos_evaluados', [])
+        
+        for modelo in modelos:
+            self._ui.mostrar_info(f"\n🔹 {modelo}:")
+            self._ui.mostrar_info("   Segmento |   MAE (kW) |   RMSE (kW) |     R²    |   MASE")
+            self._ui.mostrar_info("   ---------|------------|-------------|-----------|--------")
+            for seg in range(n_seg):
+                met = metricas.get(modelo, {}).get(str(seg), {})
+                if met:
+                    mase = met.get('MASE', float('nan'))
+                    mase_str = f"{mase:.4f}" if mase == mase else "N/A"
+                    self._ui.mostrar_info(
+                        f"   {seg:8d} | {met.get('MAE', 0):10.2f} | "
+                        f"{met.get('RMSE', 0):11.2f} | {met.get('R2', 0):7.4f} | {mase_str:>6s}"
+                    )
+    
+    def _mostrar_mejores_por_segmento(self, resultado):
+        n_seg = resultado.get('n_segments', 0)
+        metricas = resultado.get('metricas', {})
+        modelos = resultado.get('modelos_evaluados', [])
+        
+        self._ui.mostrar_info("\n🏆 Mejor modelo por segmento:")
+        for seg in range(n_seg):
+            mejor, mejor_mae = None, float('inf')
+            for modelo in modelos:
+                met = metricas.get(modelo, {}).get(str(seg), {})
+                if met and met.get('MAE', float('inf')) < mejor_mae:
+                    mejor_mae = met['MAE']
+                    mejor = modelo
+            if mejor:
+                self._ui.mostrar_info(f"   Segmento {seg}: {mejor} (MAE={mejor_mae:.2f} kW)")
+    
     def _mostrar_evaluacion(self):
         try:
             self._ui.mostrar_info("Evaluando modelos por segmento...")
@@ -128,48 +180,10 @@ class PipelineUI:
                 self._ui.mostrar_error("No se pudo completar la evaluación")
                 return
             
-            n_seg = resultado.get('n_segments', 0)
-            modelos = resultado.get('modelos_evaluados', [])
-            metricas = resultado.get('metricas', {})
-            distribucion = resultado.get('distribucion', [])
-            
-            self._ui.mostrar_exito("\n📊 EVALUACIÓN POR SEGMENTO")
-            self._ui.mostrar_info(f"Segmentos evaluados: {n_seg}")
-            self._ui.mostrar_info(f"Modelos evaluados: {', '.join(modelos)}")
-            self._ui.mostrar_info(f"Tipo de segmentación: {resultado.get('tipo_segmentacion', 'N/A')}")
-            
-            if distribucion:
-                self._ui.mostrar_info("\n📈 Distribución de muestras por segmento:")
-                total = sum(distribucion)
-                for seg, cantidad in enumerate(distribucion):
-                    if cantidad > 0:
-                        self._ui.mostrar_info(f"   Segmento {seg}: {cantidad} muestras ({cantidad/total*100:.1f}%)")
-            
-            for modelo in modelos:
-                self._ui.mostrar_info(f"\n🔹 {modelo}:")
-                self._ui.mostrar_info("   Segmento |   MAE (kW) |   RMSE (kW) |     R²    |   MASE")
-                self._ui.mostrar_info("   ---------|------------|-------------|-----------|--------")
-                for seg in range(n_seg):
-                    met = metricas.get(modelo, {}).get(str(seg), {})
-                    if met:
-                        mase = met.get('MASE', float('nan'))
-                        mase_str = f"{mase:.4f}" if mase == mase else "N/A"
-                        self._ui.mostrar_info(
-                            f"   {seg:8d} | {met.get('MAE', 0):10.2f} | "
-                            f"{met.get('RMSE', 0):11.2f} | {met.get('R2', 0):7.4f} | {mase_str:>6s}"
-                        )
-            
-            self._ui.mostrar_info("\n🏆 Mejor modelo por segmento:")
-            for seg in range(n_seg):
-                mejor, mejor_mae = None, float('inf')
-                for modelo in modelos:
-                    met = metricas.get(modelo, {}).get(str(seg), {})
-                    if met and met.get('MAE', float('inf')) < mejor_mae:
-                        mejor_mae = met['MAE']
-                        mejor = modelo
-                if mejor:
-                    self._ui.mostrar_info(f"   Segmento {seg}: {mejor} (MAE={mejor_mae:.2f} kW)")
-            
+            self._mostrar_cabecera_evaluacion(resultado)
+            self._mostrar_distribucion_muestras(resultado)
+            self._mostrar_tabla_metricas(resultado)
+            self._mostrar_mejores_por_segmento(resultado)
             self._ui.mostrar_info("\n📁 Resultados guardados.")
         except Exception as e:
             self._ui.mostrar_error(f"Error al evaluar: {str(e)}")

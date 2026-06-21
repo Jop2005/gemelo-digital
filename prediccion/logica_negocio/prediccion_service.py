@@ -15,6 +15,8 @@ from ..acceso_datos.config import get_config
 
 class PrediccionService:
     
+    MENSAJE_ORQUESTADOR_NO_INICIALIZADO = "El orquestador no está inicializado"
+    
     def __init__(self, context, model_repo, imputer_repo, historial_repo, file_reader, config_loader):
         self._context = context
         self._model_repo = model_repo
@@ -97,7 +99,7 @@ class PrediccionService:
     
     def predecir_archivo(self, ruta, features):
         if not self._orchestrator:
-            raise OrquestadorNoInicializado("El orquestador no está inicializado")
+            raise OrquestadorNoInicializado(self.MENSAJE_ORQUESTADOR_NO_INICIALIZADO)
         try:
             df = self._file_reader.read(ruta)
         except Exception as e:
@@ -108,12 +110,12 @@ class PrediccionService:
         inicio = time.time()
         resultados = self._orchestrator.predict_batch(df_input)
         latencia = (time.time() - inicio) * 1000 / len(df)
-        self._guardar_historial_lote(df, features, resultados)
+        self._guardar_historial_lote(df, resultados)
         return resultados, [latencia] * len(df)
     
     def predecir_manual(self, datos, features):
         if not self._orchestrator:
-            raise OrquestadorNoInicializado("El orquestador no está inicializado")
+            raise OrquestadorNoInicializado(self.MENSAJE_ORQUESTADOR_NO_INICIALIZADO)
         df_input = self._imputar(pd.DataFrame([datos]))
         inicio = time.time()
         resultado = self._orchestrator.predict(df_input)
@@ -123,7 +125,7 @@ class PrediccionService:
     
     def explicar_prediccion(self, datos, features, modelo_nombre=None):
         if not self._orchestrator:
-            raise OrquestadorNoInicializado("El orquestador no está inicializado")
+            raise OrquestadorNoInicializado(self.MENSAJE_ORQUESTADOR_NO_INICIALIZADO)
         modelos = self._model_repo.cargar_todos()
         if not modelos:
             raise ModelosNoEncontrados("No hay modelos disponibles")
@@ -131,7 +133,7 @@ class PrediccionService:
             modelo = {modelo_nombre: modelos[modelo_nombre]}
         else:
             modelo = modelos
-            modelo_nombre = list(modelo.keys())[0]
+            modelo_nombre = min(modelo.keys())
         interp = InterpretabilityModule(modelo, features)
         return interp.explain_prediction(modelo_nombre, pd.DataFrame([datos]))
     
@@ -149,6 +151,11 @@ class PrediccionService:
             return pd.DataFrame(X, columns=df.columns)
         return df
     
-    def _guardar_historial_lote(self, df, features, resultados):
+    def _guardar_historial_lote(self, df, resultados):
         for idx, row in df.iterrows():
-            self._historial.guardar({f: row[f] for f in features}, resultados[idx]['prediccion'], resultados[idx]['segmento'], resultados[idx]['modelo'])
+            self._historial.guardar(
+                {col: row[col] for col in df.columns},
+                resultados[idx]['prediccion'],
+                resultados[idx]['segmento'],
+                resultados[idx]['modelo']
+            )

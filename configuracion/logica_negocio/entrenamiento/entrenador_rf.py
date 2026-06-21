@@ -32,4 +32,10 @@ class EntrenadorRandomForest(BaseEntrenador):
         ]
     
     def _crear_modelo(self, params):
-        return RandomForestRegressor(**params, random_state=42, n_jobs=-1)
+        return RandomForestRegressor(
+            **params,
+            max_features=params.get('max_features', 'sqrt'),
+            min_samples_leaf=params.get('min_samples_leaf', 2),
+            random_state=42,
+            n_jobs=-1
+        )

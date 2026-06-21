@@ -2,6 +2,16 @@ import numpy as np
 import os
 
 
+def _validar_valor_numero(valor, min_valor, max_valor):
+    if min_valor is not None and valor < min_valor:
+        print(f"   ⚠️ El valor debe ser mayor o igual a {min_valor}")
+        return False
+    if max_valor is not None and valor > max_valor:
+        print(f"   ⚠️ El valor debe ser menor o igual a {max_valor}")
+        return False
+    return True
+
+
 def leer_numero(variable: str, obligatorio: bool = False, min_valor: float = None, max_valor: float = None):
     while True:
         entrada = input(f"{variable}: ").strip()
@@ -15,13 +25,8 @@ def leer_numero(variable: str, obligatorio: bool = False, min_valor: float = Non
                 valor = float(entrada)
             else:
                 valor = int(entrada)
-            if min_valor is not None and valor < min_valor:
-                print(f"   ⚠️ El valor debe ser mayor o igual a {min_valor}")
-                continue
-            if max_valor is not None and valor > max_valor:
-                print(f"   ⚠️ El valor debe ser menor o igual a {max_valor}")
-                continue
-            return valor
+            if _validar_valor_numero(valor, min_valor, max_valor):
+                return valor
         except ValueError:
             print("   ❌ Debe ser un número")
             continue
@@ -31,7 +36,7 @@ def validar_archivo(filepath: str) -> bool:
     if not os.path.exists(filepath):
         print(f"❌ Archivo no encontrado: {filepath}")
         return False
-    if not (filepath.endswith('.csv') or filepath.endswith('.xlsx') or filepath.endswith('.xls')):
+    if not filepath.endswith(('.csv', '.xlsx', '.xls')):
         print(f"❌ Formato no soportado. Use .csv o .xlsx")
         return False
     return True

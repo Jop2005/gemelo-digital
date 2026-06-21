@@ -22,7 +22,7 @@ class InterpretabilidadController(BaseController):
     def ejecutar(self) -> dict:
         modelos = self._model_repo.cargar_todos()
         if not modelos:
-            return None
+            return {}
         
         features = self._obtener_features()
         importancias = self._calcular_importancias(modelos, features)
@@ -43,7 +43,7 @@ class InterpretabilidadController(BaseController):
         instancia = pd.DataFrame([datos])
         interp = InterpretabilityModule(modelo, features)
         
-        nombre = modelo_nombre if modelo_nombre else list(modelo.keys())[0]
+        nombre = modelo_nombre if modelo_nombre else next(iter(modelo.keys()))
         return interp.explain_prediction(nombre, instancia)
     
     def _obtener_features(self) -> list:

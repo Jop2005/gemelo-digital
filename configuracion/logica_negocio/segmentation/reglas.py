@@ -12,6 +12,7 @@ class SegmentacionReglas(EstrategiaSegmentacion):
         self._num_segmentos: int = 0
     
     def fit(self, df: pd.DataFrame = None, config: Dict[str, Any] = None) -> None:
+        _ = df
         self._reglas = config.get('reglas', [])
         self._num_segmentos = len(self._reglas)
         self._variables = self._extraer_variables()

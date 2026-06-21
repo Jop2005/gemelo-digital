@@ -24,6 +24,9 @@ class PrediccionUI:
     
     def __init__(self, context, model_repo, imputer_repo, historial_repo, file_reader, config_loader):
         self._ui = Console()
+        self._features = []
+        self._target = ""
+        self._obligatorias = []
         try:
             self._controller = PrediccionController(
                 context=context,
@@ -46,61 +49,67 @@ class PrediccionUI:
             return
         
         loader = self._context.get_loader()
-        features = loader.config.get('features', [])
-        target = loader.config.get('target')
-        obligatorias = loader.config.get('obligatorias', [])
+        self._features = loader.config.get('features', [])
+        self._target = loader.config.get('target', "")
+        self._obligatorias = loader.config.get('obligatorias', [])
         
         while True:
             self._ui.mostrar_menu(self.OPCIONES_MENU)
             opcion = self._ui.obtener_opcion()
             
             if opcion == '1':
-                archivo = self._ui.obtener_ruta_archivo()
-                if not os.path.exists(archivo):
-                    self._ui.mostrar_error(f"Archivo no encontrado: {archivo}")
-                    continue
-                resultados, tiempos = self._controller.predecir_archivo(archivo, features)
-                if isinstance(resultados, dict) and 'error' in resultados:
-                    self._ui.mostrar_error(resultados['error'])
-                elif resultados:
-                    self._ui.mostrar_resultados_lote(resultados, tiempos, target)
-                else:
-                    self._ui.mostrar_error("No se pudieron generar predicciones")
-            
+                self._procesar_prediccion_archivo()
             elif opcion == '2':
-                datos = self._ui.obtener_valores_manuales(features, obligatorias)
-                res, latencia = self._controller.predecir_manual(datos, features)
-                if isinstance(res, dict) and 'error' in res:
-                    self._ui.mostrar_error(res['error'])
-                elif res:
-                    unidad = target.split('_')[0] if '_' in target else 'unidades'
-                    self._ui.mostrar_resultado(
-                        res['prediccion'], res['segmento'], res['modelo'],
-                        latencia, unidad,
-                        res.get('incertidumbre', 0.0),
-                        res.get('intervalo_confianza', None)
-                    )
-                else:
-                    self._ui.mostrar_error("No se pudo generar la predicción")
-            
+                self._procesar_prediccion_manual()
             elif opcion == '3':
-                datos = self._ui.obtener_valores_manuales(features, obligatorias)
-                self._ui.mostrar_info("\n⏳ Calculando explicación SHAP...")
-                explicacion = self._controller.explicar_prediccion(datos, features)
-                if isinstance(explicacion, dict) and 'error' in explicacion:
-                    self._ui.mostrar_error(explicacion['error'])
-                elif explicacion:
-                    unidad = target.split('_')[0] if '_' in target else 'unidades'
-                    self._ui.mostrar_explicacion_shap(explicacion, unidad)
-                else:
-                    self._ui.mostrar_error("No se pudo generar la explicación")
-            
+                self._procesar_explicacion_shap()
             elif opcion == '4':
                 break
             else:
                 self._ui.mostrar_error("Opción no válida")
             
             self._ui.pausar()
+    
+    def _procesar_prediccion_archivo(self):
+        archivo = self._ui.obtener_ruta_archivo()
+        if not os.path.exists(archivo):
+            self._ui.mostrar_error(f"Archivo no encontrado: {archivo}")
+            return
+        resultados, tiempos = self._controller.predecir_archivo(archivo, self._features)
+        if isinstance(resultados, dict) and 'error' in resultados:
+            self._ui.mostrar_error(resultados['error'])
+        elif resultados:
+            self._ui.mostrar_resultados_lote(resultados, tiempos, self._target)
+        else:
+            self._ui.mostrar_error("No se pudieron generar predicciones")
+    
+    def _procesar_prediccion_manual(self):
+        datos = self._ui.obtener_valores_manuales(self._features, self._obligatorias)
+        res, latencia = self._controller.predecir_manual(datos, self._features)
+        if isinstance(res, dict) and 'error' in res:
+            self._ui.mostrar_error(res['error'])
+        elif res:
+            unidad = self._target.split('_')[0] if '_' in self._target else 'unidades'
+            self._ui.mostrar_resultado(
+                res['prediccion'], res['segmento'], res['modelo'],
+                latencia, unidad,
+                res.get('incertidumbre', 0.0),
+                res.get('intervalo_confianza', None)
+            )
+        else:
+            self._ui.mostrar_error("No se pudo generar la predicción")
+    
+    def _procesar_explicacion_shap(self):
+        datos = self._ui.obtener_valores_manuales(self._features, self._obligatorias)
+        self._ui.mostrar_info("\n⏳ Calculando explicación SHAP...")
+        explicacion = self._controller.explicar_prediccion(datos, self._features)
+        if isinstance(explicacion, dict) and 'error' in explicacion:
+            self._ui.mostrar_error(explicacion['error'])
+        elif explicacion:
+            unidad = self._target.split('_')[0] if '_' in self._target else 'unidades'
+            self._ui.mostrar_explicacion_shap(explicacion, unidad)
+        else:
+            self._ui.mostrar_error("No se pudo generar la explicación")
 
 
 def main():

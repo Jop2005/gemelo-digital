@@ -68,14 +68,14 @@ class OptimizacionService:
         mask = segments == seg
         if mask.sum() < 10:
             warnings.warn(f"Segmento {seg} tiene solo {mask.sum()} muestras.")
-            return {'modelo': nombres[0]} if nombres else {'modelo': 'RandomForest'}
+            return {'modelo': next(iter(nombres))} if nombres else {'modelo': 'RandomForest'}
         y_seg = y_test.values[mask]
         pred_seg = {n: p[mask] for n, p in predicciones.items()}
         pesos = optimizer.optimizar(y_seg, pred_seg, segmento_id=seg)
         if pesos:
             pesos_filtrados = {k: v for k, v in pesos.items() if v > 0.001}
             if len(pesos_filtrados) == 1:
-                return {'modelo': list(pesos_filtrados.keys())[0]}
+                return {'modelo': next(iter(pesos_filtrados.keys()))}
             return {'modelo': 'Ensemble', 'pesos': {n: float(p) for n, p in pesos.items()}}
         warnings.warn(f"Optimización fallida para el segmento {seg}.")
         mejor = min(nombres, key=lambda n: float(metricas.get(n, {}).get(str(seg), {}).get('MAE', float('inf'))))

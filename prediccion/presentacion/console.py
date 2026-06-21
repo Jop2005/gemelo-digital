@@ -70,7 +70,7 @@ class Console:
             return
         self.logger.info(f"   Predicción:        {pred:.2f} {unidad}")
         self.logger.info(f"   Valor base:        {data['base_value']:.2f} {unidad}")
-        self.logger.info(f"\n   Contribuciones por característica:")
+        self.logger.info("\n   Contribuciones por característica:")
         self.logger.info(f"   {'Característica':<15s} {'Valor':>10s} {'Contribución':>12s}")
         self.logger.info(f"   {'-'*15} {'-'*10} {'-'*12}")
         contributions = data.get('contributions', {})
@@ -81,8 +81,8 @@ class Console:
             valor_str = f"{valor:.2f}" if isinstance(valor, float) else str(valor)
             direccion = "↑" if contribucion > 0 else "↓"
             self.logger.info(f"   {feature:<15s} {valor_str:>10s} {direccion} {abs(contribucion):.2f} {unidad}")
-        self.logger.info(f"\n   ℹ️  Las contribuciones positivas (↑) aumentan la predicción.")
-        self.logger.info(f"   ℹ️  Las contribuciones negativas (↓) disminuyen la predicción.")
+        self.logger.info("\n   ℹ️  Las contribuciones positivas (↑) aumentan la predicción.")
+        self.logger.info("   ℹ️  Las contribuciones negativas (↓) disminuyen la predicción.")
         self.logger.info("=" * 50)
     
     def mostrar_resultados_lote(self, resultados, tiempos, target):

@@ -28,13 +28,17 @@ class EvaluacionService:
         X, y = loader.obtener_datos_completos()
         
         split_idx = int(len(X) * 0.8)
-        X_train, y_train = X.iloc[:split_idx], y.iloc[:split_idx]
+        _, y_train = X.iloc[:split_idx], y.iloc[:split_idx]
         X_test, y_test = X.iloc[split_idx:], y.iloc[split_idx:]
         
         segments = segmenter.transform(X_test.copy())
         segmentos_validos = segments[segments >= 0]
         if len(segmentos_validos) == 0:
-            return None
+            return {
+                'error': 'No hay segmentos válidos para evaluar',
+                'modelos_evaluados': [],
+                'n_segments': 0
+            }
         
         predicciones = {nombre: modelo.predict(X_test) for nombre, modelo in modelos.items()}
         
