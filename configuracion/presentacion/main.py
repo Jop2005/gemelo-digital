@@ -216,7 +216,7 @@ class PipelineUI:
                     self._ui.mostrar_info(f"\n🔹 Segmento {seg}: {modelo} (100%)")
             
             ensambles = sum(1 for c in segmentos.values() if c.get('modelo') == 'Ensemble')
-            self._ui.mostrar_info(f"\n📊 RESUMEN:")
+            self._ui.mostrar_info("\n📊 RESUMEN:")
             self._ui.mostrar_info(f"   Segmentos con ensamblaje: {ensambles}/{n_seg}")
             self._ui.mostrar_info(f"   Segmentos con modelo único: {n_seg - ensambles}/{n_seg}")
             self._ui.mostrar_info("\n📁 Configuración guardada.")

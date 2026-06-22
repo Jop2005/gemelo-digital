@@ -37,7 +37,7 @@ def validar_archivo(filepath: str) -> bool:
         print(f"❌ Archivo no encontrado: {filepath}")
         return False
     if not filepath.endswith(('.csv', '.xlsx', '.xls')):
-        print(f"❌ Formato no soportado. Use .csv o .xlsx")
+        print("❌ Formato no soportado. Use .csv o .xlsx")
         return False
     return True
 

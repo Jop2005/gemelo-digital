@@ -17,7 +17,7 @@ def leer_numero(variable: str, obligatorio: bool = False, min_valor: float = Non
         entrada = input(f"{variable}: ").strip()
         if entrada == "":
             if obligatorio:
-                print("   ⚠️ Este campo es obligatorio")
+                print("⚠️ Este campo es obligatorio")
                 continue
             return None
         try:
@@ -37,7 +37,7 @@ def validar_archivo(filepath: str) -> bool:
         print(f"❌ Archivo no encontrado: {filepath}")
         return False
     if not filepath.endswith(('.csv', '.xlsx', '.xls')):
-        print(f"❌ Formato no soportado. Use .csv o .xlsx")
+        print("❌ Formato no soportado. Use .csv o .xlsx")
         return False
     return True
 

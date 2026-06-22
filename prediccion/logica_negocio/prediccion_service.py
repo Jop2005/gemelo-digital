@@ -113,7 +113,7 @@ class PrediccionService:
         self._guardar_historial_lote(df, resultados)
         return resultados, [latencia] * len(df)
     
-    def predecir_manual(self, datos, features):
+    def predecir_manual(self, datos):
         if not self._orchestrator:
             raise OrquestadorNoInicializado(self.MENSAJE_ORQUESTADOR_NO_INICIALIZADO)
         df_input = self._imputar(pd.DataFrame([datos]))
