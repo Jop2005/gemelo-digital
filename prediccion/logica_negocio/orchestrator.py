@@ -186,7 +186,7 @@ class Orchestrator:
             return np.zeros(n_muestras), np.zeros(n_muestras)
         
         return self._calcular_prediccion_ponderada(
-            predicciones_activas, pesos_activos, n_muestras
+            predicciones_activas, pesos_activos
         )
     
     def _recopilar_predicciones_activas(
@@ -213,7 +213,6 @@ class Orchestrator:
         self,
         predicciones_activas: List[np.ndarray],
         pesos_activos: List[float],
-        n_muestras: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calcula la predicción ponderada y su incertidumbre.
