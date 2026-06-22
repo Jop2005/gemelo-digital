@@ -1,6 +1,6 @@
 import sys
 import os
-
+import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from console import Console
 from configuracion.acceso_datos.context import DatasetContext
@@ -147,7 +147,7 @@ class PipelineUI:
                 met = metricas.get(modelo, {}).get(str(seg), {})
                 if met:
                     mase = met.get('MASE', float('nan'))
-                    mase_str = f"{mase:.4f}" if mase == mase else "N/A"
+                    mase_str = f"{mase:.4f}" if not np.isnan(mase) else "N/A"
                     self._ui.mostrar_info(
                         f"   {seg:8d} | {met.get('MAE', 0):10.2f} | "
                         f"{met.get('RMSE', 0):11.2f} | {met.get('R2', 0):7.4f} | {mase_str:>6s}"
