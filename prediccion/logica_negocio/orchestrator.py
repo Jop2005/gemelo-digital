@@ -11,7 +11,6 @@ class Orchestrator:
     Responsabilidades:
     - Seleccionar la estrategia de predicción según el segmento detectado
     - Ejecutar modelos individuales o ensamblajes ponderados
-    - Calcular incertidumbre y construir resultados
     - Proveer mecanismo de fallback cuando no hay configuración específica
     """
     
@@ -100,9 +99,9 @@ class Orchestrator:
         """Implementación interna de predicción para una muestra."""
         segmento = self._obtener_segmento(muestra)
         configuracion = self._obtener_configuracion(segmento)
-        predicciones, incertidumbres = self._ejecutar_estrategia_batch(muestra, configuracion)
+        predicciones = self._ejecutar_estrategia_batch(muestra, configuracion)
         return self._construir_resultado(
-            predicciones[0], incertidumbres[0], segmento, configuracion
+            predicciones[0], segmento, configuracion
         )
     
     def _procesar_lote_por_segmento(
@@ -116,13 +115,13 @@ class Orchestrator:
         indices_lista = [int(i) for i in indices]
         muestras_segmento = muestras.iloc[indices_lista].reset_index(drop=True)
         configuracion = self._obtener_configuracion(segmento)
-        predicciones, incertidumbres = self._ejecutar_estrategia_batch(
+        predicciones = self._ejecutar_estrategia_batch(
             muestras_segmento, configuracion
         )
         
         for i, idx in enumerate(indices_lista):
             resultados[idx] = self._construir_resultado(
-                predicciones[i], incertidumbres[i], segmento, configuracion
+                predicciones[i], segmento, configuracion
             )
     
     def _obtener_segmento(self, muestra: pd.DataFrame) -> int:
@@ -164,8 +163,7 @@ class Orchestrator:
         nombre_modelo = configuracion.get('modelo')
         if nombre_modelo and nombre_modelo in self._modelos:
             prediccion = self._modelos[nombre_modelo].predict(muestras)
-            pred = self._extraer_vector(prediccion)
-            return pred, np.zeros(len(pred))
+            return self._extraer_vector(prediccion)
         return self._ejecutar_fallback(muestras)
     
     def _ejecutar_ensamblaje(
@@ -175,7 +173,6 @@ class Orchestrator:
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Ejecuta un ensamblaje ponderado de modelos.
-        Este método fue refactorizado para reducir su complejidad cognitiva.
         """
         n_muestras = len(muestras)
         pesos_activos, predicciones_activas = self._recopilar_predicciones_activas(
@@ -183,7 +180,7 @@ class Orchestrator:
         )
         
         if not predicciones_activas:
-            return np.zeros(n_muestras), np.zeros(n_muestras)
+            return np.zeros(n_muestras)
         
         return self._calcular_prediccion_ponderada(
             predicciones_activas, pesos_activos
@@ -212,22 +209,16 @@ class Orchestrator:
     def _calcular_prediccion_ponderada(
         self,
         predicciones_activas: List[np.ndarray],
-        pesos_activos: List[float],
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        pesos_activos: List[float]
+        ) -> np.ndarray:
         """
-        Calcula la predicción ponderada y su incertidumbre.
+        Calcula la predicción ponderada
         """
         suma_pesos = sum(pesos_activos)
         prediccion_total = self._sumar_predicciones_ponderadas(
             predicciones_activas, pesos_activos
         )
-        
-        pred = prediccion_total / suma_pesos
-        incertidumbre = self._calcular_incertidumbre(
-            pred, predicciones_activas, pesos_activos
-        )
-        
-        return pred, incertidumbre
+        return prediccion_total / suma_pesos
     
     def _sumar_predicciones_ponderadas(
         self,
@@ -243,25 +234,9 @@ class Orchestrator:
                 total += pred * peso
         return total
     
-    def _calcular_incertidumbre(
-        self,
-        pred: np.ndarray,
-        predicciones_activas: List[np.ndarray],
-        pesos_activos: List[float]
-    ) -> np.ndarray:
-        """Calcula la incertidumbre como desviación estándar ponderada."""
-        if len(predicciones_activas) <= 1:
-            return np.zeros(len(pred))
-        
-        varianza = np.zeros(len(pred))
-        for p, w in zip(predicciones_activas, pesos_activos):
-            varianza += w * (p - pred) ** 2
-        
-        return np.sqrt(varianza)
-    
     # ==================== MÉTODOS PRIVADOS - FALLBACK ====================
     
-    def _ejecutar_fallback(self, muestras: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def _ejecutar_fallback(self, muestras: pd.DataFrame) -> np.ndarray:
         """Ejecuta el modelo de fallback cuando no hay configuración."""
         if not self._modelos:
             raise ValueError("No hay modelos disponibles para predicción")
@@ -270,7 +245,7 @@ class Orchestrator:
         self._nombre_modelo_fallback = mejor_modelo
         prediccion = self._modelos[mejor_modelo].predict(muestras)
         
-        return self._extraer_vector(prediccion), np.zeros(len(muestras))
+        return self._extraer_vector(prediccion)
     
     def _obtener_mejor_modelo_fallback(self) -> str:
         """Obtiene el mejor modelo según MAE o el primero disponible."""
@@ -299,6 +274,8 @@ class Orchestrator:
         
         return mejor_modelo
     
+    
+    
     # ==================== MÉTODOS PRIVADOS - UTILIDADES ====================
     
     @staticmethod
@@ -308,53 +285,22 @@ class Orchestrator:
             return np.array(prediccion)
         return np.array([prediccion])
     
-    def _contar_modelos_activos(self, configuracion: dict) -> int:
-        """Cuenta cuántos modelos participan en la configuración."""
-        if configuracion.get('modelo') == 'Ensemble':
-            pesos = configuracion.get('pesos', {})
-            return sum(1 for p in pesos.values() if p > 0)
-        return 1 if configuracion.get('modelo') else 0
-    
     def _construir_resultado(
         self,
         prediccion: float,
-        incertidumbre: float,
         segmento: int,
         configuracion: dict
-    ) -> dict:
+        ) -> dict:
         """Construye el objeto de resultado con todos los metadatos."""
-        m = self._contar_modelos_activos(configuracion)
-        intervalo = self._calcular_intervalo_confianza(
-            prediccion, incertidumbre, m, configuracion
-        )
         
         return {
             'prediccion': float(prediccion),
             'segmento': int(segmento),
             'modelo': self._obtener_nombre_modelo(configuracion),
-            'var_segmentacion': self._variable_segmentacion,
-            'incertidumbre': float(incertidumbre),
-            'intervalo_confianza': [float(intervalo[0]), float(intervalo[1])]
+            'var_segmentacion': self._variable_segmentacion
         }
     
-    def _calcular_intervalo_confianza(
-        self,
-        prediccion: float,
-        incertidumbre: float,
-        modelos_activos: int,
-        configuracion: dict
-    ) -> List[float]:
-        """Calcula el intervalo de confianza al 95%."""
-        if modelos_activos >= 2 and incertidumbre > 0:
-            margen = 1.96 * incertidumbre
-        else:
-            rmse = self._obtener_rmse_modelo(configuracion)
-            margen = 1.96 * rmse
-        
-        return [prediccion - margen, prediccion + margen]
-    
     def _obtener_nombre_modelo(self, configuracion: dict) -> str:
-        """Obtiene el nombre legible del modelo o ensamblaje."""
         if configuracion.get('modelo') == 'Ensemble':
             pesos = configuracion.get('pesos', {})
             modelos_participantes = ', '.join(pesos.keys())
@@ -366,7 +312,6 @@ class Orchestrator:
         return configuracion.get('modelo', 'desconocido')
     
     def _obtener_rmse_modelo(self, configuracion: dict) -> float:
-        """Obtiene el RMSE del modelo para el cálculo del intervalo."""
         nombre = configuracion.get('modelo', '')
         if not nombre and self._nombre_modelo_fallback:
             nombre = self._nombre_modelo_fallback

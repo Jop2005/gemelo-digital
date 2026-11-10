@@ -75,26 +75,23 @@ class PrediccionUI:
         if not os.path.exists(archivo):
             self._ui.mostrar_error(f"Archivo no encontrado: {archivo}")
             return
-        resultados, tiempos = self._controller.predecir_archivo(archivo, self._features)
+        resultados = self._controller.predecir_archivo(archivo, self._features)
         if isinstance(resultados, dict) and 'error' in resultados:
             self._ui.mostrar_error(resultados['error'])
         elif resultados:
-            self._ui.mostrar_resultados_lote(resultados, tiempos, self._target)
+            self._ui.mostrar_resultados_lote(resultados, self._target)
         else:
             self._ui.mostrar_error("No se pudieron generar predicciones")
     
     def _procesar_prediccion_manual(self):
         datos = self._ui.obtener_valores_manuales(self._features, self._obligatorias)
-        res, latencia = self._controller.predecir_manual(datos, self._features)
+        res = self._controller.predecir_manual(datos)
         if isinstance(res, dict) and 'error' in res:
             self._ui.mostrar_error(res['error'])
         elif res:
             unidad = self._target.split('_')[0] if '_' in self._target else 'unidades'
             self._ui.mostrar_resultado(
-                res['prediccion'], res['segmento'], res['modelo'],
-                latencia, unidad,
-                res.get('incertidumbre', 0.0),
-                res.get('intervalo_confianza', None)
+                res['prediccion'], res['segmento'], res['modelo'], unidad,
             )
         else:
             self._ui.mostrar_error("No se pudo generar la predicción")

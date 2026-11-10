@@ -1,4 +1,3 @@
-import time
 import os
 import glob
 import joblib
@@ -107,21 +106,17 @@ class PrediccionService:
         if not self._validar_columnas(df, features):
             raise PrediccionError("Columnas requeridas no encontradas en el archivo")
         df_input = self._imputar(df[features].copy())
-        inicio = time.time()
         resultados = self._orchestrator.predict_batch(df_input)
-        latencia = (time.time() - inicio) * 1000 / len(df)
         self._guardar_historial_lote(df, resultados)
-        return resultados, [latencia] * len(df)
+        return resultados
     
     def predecir_manual(self, datos):
         if not self._orchestrator:
             raise OrquestadorNoInicializado(self.MENSAJE_ORQUESTADOR_NO_INICIALIZADO)
         df_input = self._imputar(pd.DataFrame([datos]))
-        inicio = time.time()
         resultado = self._orchestrator.predict(df_input)
-        latencia = (time.time() - inicio) * 1000
         self._historial.guardar(datos, resultado['prediccion'], resultado['segmento'], resultado['modelo'])
-        return resultado, latencia
+        return resultado
     
     def explicar_prediccion(self, datos, features, modelo_nombre=None):
         if not self._orchestrator:

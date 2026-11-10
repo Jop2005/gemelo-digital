@@ -19,7 +19,6 @@ class Config:
         self._test_size = 0.2
         self._random_state = 42
         self._n_segments = 6
-        self._latencia_max_ms = 100
         self._crear_carpetas()
 
     @property
@@ -81,10 +80,6 @@ class Config:
     def n_segments(self) -> int:
         return self._n_segments
 
-    @property
-    def latencia_max_ms(self) -> int:
-        return self._latencia_max_ms
-
     def set_carpeta_config(self, path):
         self._carpeta_config = Path(path)
         self._crear_carpetas()
@@ -98,10 +93,6 @@ class Config:
 
     def set_n_segments(self, value):
         self._n_segments = value
-
-    def set_latencia_max_ms(self, value):
-        self._latencia_max_ms = value
-
 
 def get_config():
     return Config()

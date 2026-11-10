@@ -17,13 +17,13 @@ class Console:
         return input(mensaje).strip()
     
     def obtener_ruta_archivo(self) -> str:
-        self.logger.info("\n📁 Ingrese la ruta del archivo (CSV o Excel):")
+        self.logger.info("\n Ingrese la ruta del archivo (CSV o Excel):")
         archivo = input("Ruta: ").strip()
         return normalizar_ruta(archivo)
     
     def obtener_valores_manuales(self, features, obligatorias):
         datos = {}
-        self.logger.info("\n📝 Ingrese los valores:")
+        self.logger.info("\n Ingrese los valores:")
         for feature in features:
             es_obligatoria = feature in obligatorias
             if feature == 'Hora':
@@ -37,32 +37,23 @@ class Console:
             datos[feature] = valor
         return datos
     
-    def mostrar_resultado(self, prediccion: float, segmento: int, modelo: str, latencia: float, unidad: str,
-                          incertidumbre: float = 0.0, intervalo_confianza: list = None):
+    def mostrar_resultado(self, prediccion: float, segmento: int, modelo: str, unidad: str):
         self.logger.info("\n" + "=" * 40)
         self.logger.info("RESULTADO:")
-        self.logger.info(f"   Predicción:                   {prediccion:.2f} {unidad}")
-        self.logger.info(f"   Incertidumbre (σ):            ±{incertidumbre:.2f} {unidad}")
-        if intervalo_confianza:
-            self.logger.info(f"   Intervalo de confianza 95%:   [{intervalo_confianza[0]:.2f}, {intervalo_confianza[1]:.2f}] {unidad}")
-        self.logger.info(f"   Segmento:                     {segmento}")
-        self.logger.info(f"   Modelo:                       {modelo}")
-        self.logger.info(f"\n⏱️  Latencia: {latencia:.2f} ms")
-        if latencia < 100:
-            self.logger.success("   ✅ RNF-01 CUMPLIDO (<100ms)")
-        else:
-            self.logger.error("   ❌ RNF-01 NO CUMPLIDO")
+        self.logger.info(f"Predicción:  {prediccion:.2f} {unidad}")
+        self.logger.info(f"Segmento:  {segmento}")
+        self.logger.info(f"Modelo:  {modelo}")
         self.logger.info("=" * 40)
     
     def mostrar_explicacion_shap(self, data: dict, unidad: str):
         self.logger.info("\n" + "=" * 50)
-        self.logger.info("🔍 EXPLICACIÓN SHAP DE LA PREDICCIÓN")
+        self.logger.info("EXPLICACIÓN SHAP DE LA PREDICCIÓN")
         self.logger.info("=" * 50)
         if data is None:
-            self.logger.error("   No se pudo generar la explicación")
+            self.logger.error("No se pudo generar la explicación")
             return
         if 'error' in data:
-            self.logger.error(f"   {data['error']}")
+            self.logger.error(f" {data['error']}")
             return
         pred = data.get('prediction', None)
         if pred is None:
@@ -81,28 +72,16 @@ class Console:
             valor_str = f"{valor:.2f}" if isinstance(valor, float) else str(valor)
             direccion = "↑" if contribucion > 0 else "↓"
             self.logger.info(f"   {feature:<15s} {valor_str:>10s} {direccion} {abs(contribucion):.2f} {unidad}")
-        self.logger.info("\n   ℹ️  Las contribuciones positivas (↑) aumentan la predicción.")
-        self.logger.info("   ℹ️  Las contribuciones negativas (↓) disminuyen la predicción.")
+        self.logger.info("\n Las contribuciones positivas (↑) aumentan la predicción.")
+        self.logger.info(" Las contribuciones negativas (↓) disminuyen la predicción.")
         self.logger.info("=" * 50)
     
-    def mostrar_resultados_lote(self, resultados, tiempos, target):
-        self.logger.info("\n   📊 RESULTADOS:")
+    def mostrar_resultados_lote(self, resultados, target):
+        self.logger.info("\n  RESULTADOS:")
         unidad = target.split('_')[0] if '_' in target else 'unidades'
         for i, res in enumerate(resultados):
-            inc = res.get('incertidumbre', 0.0)
-            intervalo = res.get('intervalo_confianza', None)
-            intervalo_str = ""
-            if intervalo:
-                intervalo_str = f", IC95%=[{intervalo[0]:.2f}, {intervalo[1]:.2f}]"
-            self.logger.info(f"   Fila {i+1}: Predicción={res['prediccion']:.2f} ±{inc:.2f}{intervalo_str} {unidad}, "
+            self.logger.info(f"   Fila {i+1}: Predicción={res['prediccion']:.2f} {unidad}, "
                               f"Segmento={res['segmento']}, Modelo={res['modelo']}")
-        if tiempos:
-            latencia_promedio = np.mean(tiempos)
-            self.logger.info(f"\n   ⏱️  Latencia promedio: {latencia_promedio:.2f} ms")
-            if latencia_promedio < 100:
-                self.logger.success("   ✅ RNF-01 CUMPLIDO (<100ms por muestra)")
-            else:
-                self.logger.error("   ❌ RNF-01 NO CUMPLIDO")
     
     def mostrar_error(self, mensaje: str):
         self.logger.error(f"   ❌ {mensaje}")

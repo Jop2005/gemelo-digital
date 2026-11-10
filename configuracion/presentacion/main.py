@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from console import Console
 from configuracion.acceso_datos.context import DatasetContext
 from configuracion.acceso_datos.config import get_config

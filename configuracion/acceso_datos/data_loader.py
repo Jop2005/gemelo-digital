@@ -40,6 +40,7 @@ class DataLoader:
         self._X: Optional[pd.DataFrame] = None
         self._y: Optional[pd.Series] = None
         
+        self._root = Path(__file__).parent.parent.parent.resolve()
         # Componentes internos
         self._file_reader = FileReader()
         self._preprocessor = self._crear_preprocessor()
@@ -103,7 +104,11 @@ class DataLoader:
         if not ruta:
             raise ValueError("No se especificó ruta de datos")
         
-        self._df = self._file_reader.read(ruta)
+        ruta_path = Path(ruta)
+        if not ruta_path.is_absolute():
+            ruta_path =  self._root / ruta_path
+
+        self._df = self._file_reader.read(str(ruta_path))
         return self._df
     
     def establecer_dataframe(self, df: pd.DataFrame) -> None:

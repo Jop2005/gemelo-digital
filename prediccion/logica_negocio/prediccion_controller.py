@@ -16,9 +16,9 @@ class PrediccionController(BaseController):
         except PrediccionError as e:
             return {'error': str(e)}, None
     
-    def predecir_manual(self, datos, features):
+    def predecir_manual(self, datos):
         try:
-            return self._servicio.predecir_manual(datos, features)
+            return self._servicio.predecir_manual(datos)
         except PrediccionError as e:
             return {'error': str(e)}, None
     

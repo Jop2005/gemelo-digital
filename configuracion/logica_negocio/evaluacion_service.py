@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 import pandas as pd
 import joblib
 import os
@@ -6,7 +6,6 @@ from .segmentation.segmenter import Segmenter
 from .evaluation import ModelEvaluator
 from .excepciones import SegmentacionNoEncontrada, ModelosNoEncontrados
 from ..acceso_datos.config import get_config
-
 
 class EvaluacionService:
     

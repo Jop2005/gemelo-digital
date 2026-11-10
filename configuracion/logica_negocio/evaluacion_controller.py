@@ -3,7 +3,6 @@ from .evaluacion_service import EvaluacionService
 from .excepciones import EvaluacionError
 from ..acceso_datos.joblib_model_repository import JoblibModelRepository
 
-
 class EvaluacionController(BaseController):
     
     def __init__(self, context, model_repo=None):

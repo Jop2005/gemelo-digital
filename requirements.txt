@@ -6,3 +6,4 @@ scipy
 joblib
 fastapi
 uvicorn
+matplotlib
